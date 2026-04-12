@@ -42,12 +42,12 @@ function getFontPath() {
  */
 function generateRandomTransforms() {
     return {
-        shouldMirror: Math.random() > 0.5,           // 50% chance
-        speedFactor: 1.0 + (Math.random() * 0.15),   // 1.0 - 1.15x
-        contrast: 1.0 + (Math.random() * 0.1 - 0.05), // 0.95 - 1.05
-        brightness: 1.0 + (Math.random() * 0.1 - 0.05), // 0.95 - 1.05
-        saturation: 1.0 + (Math.random() * 0.2 - 0.1), // 0.9 - 1.1
-        zoomIntensity: Math.random() * 0.05,         // 0 - 5% zoom
+        shouldMirror: Math.random() > 0.6,            // 40% chance (less aggressive)
+        speedFactor: 1.01 + (Math.random() * 0.03),   // 1.01 - 1.04x (subtle, less artifacting)
+        contrast: 1.0 + (Math.random() * 0.06 - 0.03), // 0.97 - 1.03
+        brightness: Math.random() * 0.04 - 0.02,      // -0.02 - 0.02 (FFmpeg eq brightness is offset)
+        saturation: 1.0 + (Math.random() * 0.08 - 0.04), // 0.96 - 1.04
+        zoomIntensity: Math.random() * 0.015,         // 0 - 1.5% zoom
     };
 }
 
@@ -87,7 +87,7 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     // Filter 2: Scale preserving aspect ratio to cover 1080x1920
     // Escape parentheses for Windows FFmpeg compatibility
-    filters.push('scale=if(gt(iw/ih\\,9/16)\\,1080\\,trunc(oh*9/16/2)*2):if(gt(iw/ih\\,9/16)\\,trunc(ow*16/9/2)*2\\,1920)');
+    filters.push('scale=if(gt(iw/ih\\,9/16)\\,1080\\,trunc(oh*9/16/2)*2):if(gt(iw/ih\\,9/16)\\,trunc(ow*16/9/2)*2\\,1920):flags=lanczos');
 
     // Filter 3: Crop to exact 9:16 (escape parentheses for Windows)
     filters.push('crop=1080:1920:(iw-1080)/2:(ih-1920)/2');
@@ -101,7 +101,7 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     // Filter 5: Color adjustments
     if (!options.disableColorAdjust) {
-        filters.push(`eq=contrast=${transforms.contrast.toFixed(2)}:brightness=${transforms.brightness.toFixed(2)}:saturation=${transforms.saturation.toFixed(2)}`);
+        filters.push(`eq=contrast=${transforms.contrast.toFixed(3)}:brightness=${transforms.brightness.toFixed(3)}:saturation=${transforms.saturation.toFixed(3)}`);
     }
 
     // Filter 6: Watermark overlay (bottom-right with shadow)
@@ -110,8 +110,10 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     filters.push(`drawtext=text='${escapedText}':fontsize=42:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2`);
 
-    // Speed adjustment via output options (more reliable than setpts filter)
-    const audioPitch = options.preservePitch ? 'aresample=async=1:first_pts=0' : undefined;
+    // Keep all transforms in a single video filter graph.
+    if (Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
+        filters.push(`setpts=${(1 / transforms.speedFactor).toFixed(4)}*PTS`);
+    }
 
     return new Promise((resolve, reject) => {
         const command = ffmpeg(inputPath)
@@ -119,18 +121,21 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
             .audioCodec('aac')
             .videoCodec('libx264')
             .outputOptions([
-                '-preset', 'fast',
-                '-crf', '23',
+                '-preset', 'slow',
+                '-crf', '18',
                 '-movflags', '+faststart',
                 '-pix_fmt', 'yuv420p',
+                '-profile:v', 'high',
+                '-level', '4.1',
+                '-maxrate', '12M',
+                '-bufsize', '24M',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-map_metadata', '-1',
             ]);
 
         // Apply speed change
         if (Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
-            // Using PTS method for video speed (add just this filter, not all filters again)
-            const videoFilter = `setpts=${(1 / transforms.speedFactor).toFixed(4)}*PTS`;
-            command.videoFilters(videoFilter);  // Don't include filters.join(',') again!
-
             // For audio, use atempo (can only do 0.5x to 2x, so chain multiple if needed)
             if (transforms.speedFactor >= 0.5 && transforms.speedFactor <= 2.0) {
                 command.audioFilters(`atempo=${transforms.speedFactor.toFixed(3)}`);
