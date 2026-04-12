@@ -1,0 +1,82 @@
+# =================================================================
+# INSTA-AUTOGRAM: HOW TO GET YOUR INSTAGRAM API DETAILS
+# =================================================================
+
+Instagram API requires three specific IDs and a valid Access Token. 
+Here is step-by-step how to get them for free.
+
+-------------------------------------------------------------------
+PHASE 1: Prepare Your Accounts
+-------------------------------------------------------------------
+1. You must have a Facebook Page.
+2. You must have an Instagram Professional or Creator account.
+3. Link your Instagram account to your Facebook Page:
+   - Go to your Facebook Page Settings -> Linked Accounts 
+   - Connect your Instagram account.
+
+-------------------------------------------------------------------
+PHASE 2: Create a Meta Developer App
+-------------------------------------------------------------------
+1. Go to https://developers.facebook.com/apps/
+2. Click "Create App".
+3. Select "Other" -> Next.
+4. Select "Business" -> Next.
+5. Name your app (e.g. "InstaAutogram Bot").
+6. Inside the App Dashboard, scroll down and search for "Instagram Graph API".
+7. Click "Set Up".
+
+-------------------------------------------------------------------
+PHASE 3: How to Find Your App ID & App Secret
+-------------------------------------------------------------------
+1. In the Meta App Dashboard, look at the left sidebar menu.
+2. Click "App Settings" -> "Basic".
+3. Here you will see your App ID and App Secret (click show).
+
+   --> PASTE these into the Insta-Autogram Dashboard!
+
+-------------------------------------------------------------------
+PHASE 4: How to Generate the Access Token
+-------------------------------------------------------------------
+1. Go to the Graph API Explorer: https://developers.facebook.com/tools/explorer/
+2. On the right side under "Meta App", select your app from the dropdown.
+3. Under "User or Page", click "Get Page Access Token".
+   - A window will pop up asking you to log into Facebook.
+   - It will ask which Instagram Business accounts and Pages you want the app to access. SELECT YOUR PAGE AND IG ACCOUNT.
+   - Click Next/Done.
+4. Now, the "User or Page" dropdown will actually show the name of your Facebook Page. Make sure it is selected!
+5. Now look at the "Permissions" box. Type in and add these exact permissions:
+   - instagram_basic
+   - instagram_content_publish
+   - pages_show_list
+   - pages_read_engagement
+6. Finally, click the big "Generate Access Token" button.
+7. A long string of characters will appear in the "Access Token" text box at the very top.
+
+   --> COPY this long string. This is your "Access Token".
+   --> PASTE it into the Insta-Autogram Dashboard!
+
+-------------------------------------------------------------------
+PHASE 5: How to Find Your Instagram User ID
+-------------------------------------------------------------------
+1. While still in the Graph API Explorer (with your Page Access Token generated):
+2. In the query box at the top (next to "GET"), type this exactly:
+   me?fields=instagram_business_account
+3. Click the "Submit" button.
+4. In the white response box below, you will see something like:
+   {
+     "instagram_business_account": {
+       "id": "178414XXXXXXX"
+     },
+     "id": "100234XXXXXXX"
+   }
+
+   --> The number inside "instagram_business_account": {"id"} is your "Instagram User ID".
+   --> COPY that number and PASTE it into the Insta-Autogram Dashboard!
+
+=================================================================
+YOU'RE DONE!
+- App ID
+- App Secret
+- Access Token
+- Instagram User ID
+You now have everything needed to publish successfully!

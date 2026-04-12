@@ -1,0 +1,19 @@
+{
+  "account": {
+    "page_name": "Nature Page",
+    "username": "naturepage",
+    "instagram_user_id": "",
+    "has_token": false,
+    "allowed_submitters": []
+  },
+  "tags_api": {
+    "success": false,
+    "error": "Unsupported get request. Object with ID 'tags' does not exist, cannot be loaded due to missing permissions, or does not support this operation. Please read the Graph API documentation at https://developers.facebook.com/docs/graph-api",
+    "code": 100
+  },
+  "mentioned_api": {
+    "success": false,
+    "error": "Unsupported get request. Object with ID 'mentioned_media' does not exist, cannot be loaded due to missing permissions, or does not support this operation. Please read the Graph API documentation at https://developers.facebook.com/docs/graph-api",
+    "code": 100
+  }
+}

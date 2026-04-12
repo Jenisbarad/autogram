@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "Bash(node -c src/index.js)",
+      "Bash(node -c src/api/botWebhook.js)",
+      "Bash(node -c src/api/quickSubmit.js)",
+      "Bash(node -c src/utils/rateLimiter.js)",
+      "Bash(node -c src/utils/duplicateDetector.js)",
+      "Bash(ls -la .env*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:4000/health)",
+      "Bash(curl -s http://localhost:4000/api/bot/status)",
+      "Bash(curl -s http://localhost:4000/api/quick-submit/accounts)",
+      "Bash(curl -s http://localhost:4000/bull-board/)",
+      "Bash(node scripts/test-whatsapp.js)",
+      "Bash(curl -X POST \"http://localhost:4000/api/quick-submit\" -H \"Content-Type: application/json\" -d \"{\\\\\"page_slug\\\\\":\\\\\"cricketpulse1111\\\\\",\\\\\"reel_url\\\\\":\\\\\"https://www.instagram.com/reel/DWBaFDyk0aR/\\\\\",\\\\\"submitter_username\\\\\":\\\\\"telegram_bot\\\\\"}\")",
+      "Bash(npx kill-port:*)",
+      "Bash(curl -X POST \"http://localhost:4000/api/quick-submit\" -H \"Content-Type: application/json\" -d \"{\\\\\"page_slug\\\\\":\\\\\"cricketpulse1111\\\\\",\\\\\"reel_url\\\\\":\\\\\"https://www.instagram.com/reel/DWBaFDyk0aR/\\\\\",\\\\\"submitter_username\\\\\":\\\\\"test\\\\\"}\")",
+      "Bash(ls media/raw/*.mp4)",
+      "Bash(xargs -I {} ffmpeg -i \"{}\" -y -acodec aac -vcodec libx264 -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_output.mp4\")",
+      "Bash(timeout 60 yt-dlp \"https://www.instagram.com/reel/DWBaFDyk0aR/\" -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" --merge-output-format mp4 -o \"./media/raw/test_manual.mp4\" --no-playlist)",
+      "Bash(ffmpeg -y -i \"media/raw/test_manual.mp4\" -acodec aac -filter:a \"atempo=1.124\" -vcodec libx264 -filter:v \"hflip,scale=if\\(gt\\(iw/ih,9/16\\),1080,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih,9/16\\),trunc\\(ow*16/9/2\\)*2,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_ffmpeg.mp4\")",
+      "Bash(ffmpeg -y -i \"media/raw/test_manual.mp4\" -vcodec libx264 -filter:v \"hflip,scale=if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,1080\\\\\\\\,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,trunc\\(ow*16/9/2\\)*2\\\\\\\\,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p -an \"d:/insta-autogram-antigravity/backend/media/processed/test_escaped.mp4\")",
+      "Bash(ffmpeg -i \"media/raw/307157ba-3f54-4246-a5a4-8bbb93e012b3.mp4\" -y -acodec aac -vcodec libx264 -filter:v \"hflip,scale=if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,1080\\\\\\\\,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,trunc\\(ow*16/9/2\\)*2\\\\\\\\,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2,zoompan=z=min\\(zoom+0.0489,1.5\\):d=1:x=iw/2-\\(iw/zoom/2\\):y=ih/2-\\(ih/zoom/2\\),eq=contrast=1.05:brightness=1.00:saturation=0.96,drawtext=text=@cricketpulse1111:fontsize=42:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2:fontfile=C:/Windows/Fonts/arial.ttf\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_debug.mp4\")",
+      "Bash(ffmpeg -y -i \"media/raw/test_manual.mp4\" -acodec aac -vcodec libx264 -filter:v \"hflip,scale=if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,1080\\\\\\\\,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,trunc\\(ow*16/9/2\\)*2\\\\\\\\,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2,zoompan=z=min\\(zoom+0.0489,1.5\\):d=1:x=iw/2-\\(iw/zoom/2\\):y=ih/2-\\(ih/zoom/2\\),eq=contrast=1.05:brightness=1.00:saturation=0.96\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_all_filters.mp4\")",
+      "Bash(cp media/raw/test_manual.mp4 media/raw/test_for_processing.mp4)",
+      "Bash(node -e ':*)",
+      "Bash(ffmpeg -y -i \"media/raw/test_for_processing.mp4\" -acodec aac -filter:a \"atempo=1.089\" -vcodec libx264 -filter:v \"scale=if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,1080\\\\\\\\,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,trunc\\(ow*16/9/2\\)*2\\\\\\\\,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2,zoompan=z=min\\(zoom+0.0358\\\\\\\\,1.5\\):d=1:x=iw/2-\\(iw/zoom/2\\):y=ih/2-\\(ih/zoom/2\\),eq=contrast=1.01:brightness=1.01:saturation=1.08\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_manual3.mp4\")",
+      "Bash(ffmpeg -y -i \"media/raw/test_manual.mp4\" -acodec aac -filter:a \"atempo=1.011\" -vcodec libx264 -filter:v \"hflip,scale=if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,1080\\\\\\\\,trunc\\(oh*9/16/2\\)*2\\):if\\(gt\\(iw/ih\\\\\\\\,9/16\\)\\\\\\\\,trunc\\(ow*16/9/2\\)*2\\\\\\\\,1920\\),crop=1080:1920:\\(iw-1080\\)/2:\\(ih-1920\\)/2,zoompan=z=min\\(zoom+0.0473\\\\\\\\,1.5\\):d=1:x=iw/2-\\(iw/zoom/2\\):y=ih/2-\\(ih/zoom/2\\),eq=contrast=0.98:brightness=0.99:saturation=0.96,drawtext=text='@cricketpulse1111':fontsize=42:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2\" -preset fast -crf 23 -movflags +faststart -pix_fmt yuv420p \"d:/insta-autogram-antigravity/backend/media/processed/test_watermark_manual.mp4\")",
+      "Bash(curl -X POST \"http://localhost:4000/api/quick-submit\" -H \"Content-Type: application/json\" -d \"{\\\\\"page_slug\\\\\":\\\\\"cricketpulse1111\\\\\",\\\\\"reel_url\\\\\":\\\\\"https://www.instagram.com/reel/C5oKm2PMs5G/\\\\\",\\\\\"submitter_username\\\\\":\\\\\"test\\\\\"}\")",
+      "Bash(ffprobe -v error -show_entries stream=width,height,duration -of default=noprint_wrappers=1 \"d:/insta-autogram-antigravity/backend/media/processed/test_watermark3_processed.mp4\")",
+      "Bash(powershell.exe -Command \"Invoke-RestMethod -Uri 'http://127.0.0.1:4040/api/tunnels' | ConvertTo-Json\")",
+      "Bash(tasklist)",
+      "Bash(powershell.exe -Command \"Invoke-RestMethod -Uri 'http://127.0.0.1:4040/api/tunnels' | Select-Object -ExpandProperty tunnels | Select-Object -ExpandProperty public_url\")",
+      "WebSearch"
+    ]
+  }
+}
