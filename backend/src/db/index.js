@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { migrate: runMigrations } = require('./migrate');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -31,4 +32,4 @@ async function query(text, params) {
     return res;
 }
 
-module.exports = { pool, query, testConnection };
+module.exports = { pool, query, testConnection, migrate: runMigrations };

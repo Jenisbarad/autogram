@@ -26,4 +26,4 @@ async function migrate() {
     process.exit(0);
 }
 
-migrate();
+module.exports = { migrate };
