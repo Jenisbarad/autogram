@@ -1,6 +1,7 @@
--- Import existing data from local database
--- This migration inserts the instagram_accounts that were configured locally
+-- Insert Instagram accounts (retry with correct data types)
+-- This fixes the failed 004 migration
 
+-- Insert or update the accounts
 INSERT INTO instagram_accounts (id, page_name, username, slug, category, instagram_user_id, access_token, app_id, app_secret, posting_mode, auto_viral_threshold, watermark_text, is_active, created_at, updated_at, allowed_submitters)
 VALUES
     (1, 'Nature Page', 'naturepage', 'nature-page', 'nature', NULL, NULL, NULL, NULL, 'manual', 0.7000, '@naturepage', true, '2026-03-11 11:31:20.065881+05:30', '2026-03-11 11:31:20.065881+05:30', NULL),
