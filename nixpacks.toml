@@ -1,8 +1,5 @@
 [phases.setup]
 nixPkgs = ["ffmpeg", "python3", "pip"]
 
-[start]
-cmd = "bash backend/start-with-deps.sh"
-
 [env]
 PATH = "/root/.local/bin:$PATH"

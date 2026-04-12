@@ -10,4 +10,4 @@ else
 fi
 
 # Start the application
-cd backend && npm start
+npm start

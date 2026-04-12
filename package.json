@@ -4,7 +4,7 @@
   "description": "Instagram Auto-Upload System",
   "main": "backend/src/index.js",
   "scripts": {
-    "start": "cd backend && npm start",
+    "start": "pip3 install yt-dlp --break-system-packages 2>/dev/null || pip3 install yt-dlp && cd backend && npm start",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
