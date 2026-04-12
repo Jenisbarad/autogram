@@ -37,7 +37,10 @@
       "Bash(gh --version)",
       "Bash(git config:*)",
       "Bash(grep -E \"\\\\.\\(jpeg|jpg|png|mp4|mov\\)$\")",
-      "Bash(curl --version)"
+      "Bash(curl --version)",
+      "Bash(npm install:*)",
+      "Bash(railway login:*)",
+      "Bash(curl -s -X PATCH -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: Bearer YOUR_TOKEN' https://api.github.com/repos/Jenisbarad/autogram -d '{\"private\":false}')"
     ]
   }
 }
