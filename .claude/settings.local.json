@@ -33,7 +33,11 @@
       "Bash(powershell.exe -Command \"Invoke-RestMethod -Uri 'http://127.0.0.1:4040/api/tunnels' | ConvertTo-Json\")",
       "Bash(tasklist)",
       "Bash(powershell.exe -Command \"Invoke-RestMethod -Uri 'http://127.0.0.1:4040/api/tunnels' | Select-Object -ExpandProperty tunnels | Select-Object -ExpandProperty public_url\")",
-      "WebSearch"
+      "WebSearch",
+      "Bash(gh --version)",
+      "Bash(git config:*)",
+      "Bash(grep -E \"\\\\.\\(jpeg|jpg|png|mp4|mov\\)$\")",
+      "Bash(curl --version)"
     ]
   }
 }
