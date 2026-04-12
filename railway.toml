@@ -1,11 +1,8 @@
-# Railway Configuration for Insta-Autogram
+[build]
+builder = "NIXPACKS"
 
 [deploy]
-# Health check configuration
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-# Disable serverless to keep app running 24/7
-disableServerless = true
