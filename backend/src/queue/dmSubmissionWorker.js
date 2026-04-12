@@ -150,12 +150,14 @@ async function processAndPublishReel({ account, mediaUrl, sourceUrl, senderUsern
 
     // Step 1: Download the reel
     console.log(`📥 [Submission Worker] Downloading reel...`);
+    const { getYtDlpPath } = require('../utils/ytDlpPath');
     const { execFile } = require('child_process');
     const { promisify } = require('util');
     const execFileAsync = promisify(execFile);
 
     try {
-        await execFileAsync('yt-dlp', [
+        const ytDlpPath = getYtDlpPath();
+        await execFileAsync(ytDlpPath, [
             mediaUrl || sourceUrl,
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',

@@ -20,6 +20,7 @@ const { processVideo } = require('../processing/videoProcessor');
 const { generateCaption } = require('../ai/captionGenerator');
 const { publishToInstagram } = require('../publisher/instagramPublisher');
 const { checkDuplicate } = require('../utils/duplicateDetector');
+const { getYtDlpPath } = require('../utils/ytDlpPath');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
@@ -139,7 +140,9 @@ async function processQuickSubmit({ account, reel_url, submitter_username }) {
     try {
         // Step 1: Download reel
         console.log(`📥 [QuickSubmit] Downloading reel...`);
-        await execFileAsync('yt-dlp', [
+        const ytDlpPath = getYtDlpPath();
+        console.log(`📂 [QuickSubmit] Using yt-dlp: ${ytDlpPath}`);
+        await execFileAsync(ytDlpPath, [
             reel_url,
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',

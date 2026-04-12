@@ -5,6 +5,7 @@ const { publishToInstagram } = require('../publisher/instagramPublisher');
 const { generateCaption } = require('../ai/captionGenerator');
 const { processVideo, generateRandomTransforms } = require('../processing/videoProcessor');
 const { checkDuplicate } = require('../utils/duplicateDetector');
+const { getYtDlpPath } = require('../utils/ytDlpPath');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -93,7 +94,8 @@ async function processAndPublish({ account, reel_url, submitter_username }) {
     // Step 1: Download the reel
     console.log(`[Submissions] Downloading reel...`);
     try {
-        await execFileAsync('yt-dlp', [
+        const ytDlpPath = getYtDlpPath();
+        await execFileAsync(ytDlpPath, [
             reel_url,
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',
