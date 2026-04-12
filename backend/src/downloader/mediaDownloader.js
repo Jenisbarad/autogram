@@ -1,10 +1,6 @@
-const { execFile } = require('child_process');
-const { getYtDlpPath } = require('../utils/ytDlpPath');
+const { getYtDlpCommand, execYtDlp } = require('../utils/ytDlpPath');
 const path = require('path');
 const fs = require('fs');
-const { promisify } = require('util');
-
-const execFileAsync = promisify(execFile);
 
 const MEDIA_DIR = path.resolve(process.env.MEDIA_STORAGE_PATH || './media');
 const RAW_DIR = path.join(MEDIA_DIR, 'raw');
@@ -47,8 +43,9 @@ async function downloadMedia(item, outputId) {
     ];
 
     console.log(`⬇️  Downloading (H.264+AAC forced): ${item.url}`);
-    const ytDlpPath = getYtDlpPath();
-    await execFileAsync(ytDlpPath, args, { timeout: 120000 });
+    const ytDlp = getYtDlpCommand();
+    console.log(`📂 Using yt-dlp: ${ytDlp.display}`);
+    await execYtDlp(args, { timeout: 120000 });
 
     // Find the downloaded file
     const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith(outputId));

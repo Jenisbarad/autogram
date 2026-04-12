@@ -20,14 +20,10 @@ const { processVideo } = require('../processing/videoProcessor');
 const { generateCaption } = require('../ai/captionGenerator');
 const { publishToInstagram } = require('../publisher/instagramPublisher');
 const { checkDuplicate } = require('../utils/duplicateDetector');
-const { getYtDlpPath } = require('../utils/ytDlpPath');
-const { execFile } = require('child_process');
-const { promisify } = require('util');
+const { getYtDlpCommand, execYtDlp } = require('../utils/ytDlpPath');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-
-const execFileAsync = promisify(execFile);
 
 /**
  * POST /api/quick-submit
@@ -140,9 +136,9 @@ async function processQuickSubmit({ account, reel_url, submitter_username }) {
     try {
         // Step 1: Download reel
         console.log(`📥 [QuickSubmit] Downloading reel...`);
-        const ytDlpPath = getYtDlpPath();
-        console.log(`📂 [QuickSubmit] Using yt-dlp: ${ytDlpPath}`);
-        await execFileAsync(ytDlpPath, [
+        const ytDlp = getYtDlpCommand();
+        console.log(`📂 [QuickSubmit] Using yt-dlp: ${ytDlp.display}`);
+        await execYtDlp([
             reel_url,
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',

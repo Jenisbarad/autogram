@@ -5,14 +5,10 @@ const { publishToInstagram } = require('../publisher/instagramPublisher');
 const { generateCaption } = require('../ai/captionGenerator');
 const { processVideo, generateRandomTransforms } = require('../processing/videoProcessor');
 const { checkDuplicate } = require('../utils/duplicateDetector');
-const { getYtDlpPath } = require('../utils/ytDlpPath');
+const { getYtDlpCommand, execYtDlp } = require('../utils/ytDlpPath');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const { execFile } = require('child_process');
-const { promisify } = require('util');
-
-const execFileAsync = promisify(execFile);
 const IG_GRAPH_API = 'https://graph.facebook.com/v25.0';
 
 /**
@@ -94,8 +90,9 @@ async function processAndPublish({ account, reel_url, submitter_username }) {
     // Step 1: Download the reel
     console.log(`[Submissions] Downloading reel...`);
     try {
-        const ytDlpPath = getYtDlpPath();
-        await execFileAsync(ytDlpPath, [
+        const ytDlp = getYtDlpCommand();
+        console.log(`[Submissions] Using yt-dlp: ${ytDlp.display}`);
+        await execYtDlp([
             reel_url,
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             '--merge-output-format', 'mp4',

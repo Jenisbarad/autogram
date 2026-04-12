@@ -2,7 +2,8 @@
 FROM node:20-alpine
 
 # Install FFmpeg and system dependencies
-RUN apk add --no-cache ffmpeg postgresql-client python3 make g++ pkgconfig pixman-dev
+RUN apk add --no-cache ffmpeg postgresql-client python3 py3-pip make g++ pkgconfig pixman-dev \
+  && pip3 install --no-cache-dir yt-dlp
 
 WORKDIR /app
 
