@@ -15,7 +15,7 @@ const botWebhookRouter = require('./api/botWebhook');
 const { setupBullBoard } = require('./queue/jobQueue');
 const { startWorkers } = require('./queue/workers');
 const { runAllDMChecks } = require('./queue/dmSubmissionWorker');
-const { testConnection } = require('./db');
+const { testConnection, migrate } = require('./db');
 
 const authRouter = require('./api/auth');
 const adminAuthRouter = require('./api/adminAuth');
@@ -77,6 +77,18 @@ async function start() {
   try {
     await testConnection();
     console.log('✅ Database connected');
+
+    // Run migrations on startup ( Railway deployment )
+    try {
+      await migrate();
+      console.log('✅ Database migrations completed');
+    } catch (err) {
+      if (err.message.includes('already exists')) {
+        console.log('✅ Database tables already exist');
+      } else {
+        console.warn('⚠️ Migration warning:', err.message);
+      }
+    }
 
     startWorkers();
     console.log('✅ BullMQ workers started');
