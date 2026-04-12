@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["ffmpeg", "ffmpeg-dev", "postgresql-client", "python3", "make", "g++", "pkgconfig"]
+
+[phases.build]
+cmds = ["npm ci"]
+
+[phases.start]
+cmds = ["npm start"]
+
+[start]
+cmd = "node src/index.js"
+
+[variables]
+PORT = "4000"
+NODE_ENV = "production"

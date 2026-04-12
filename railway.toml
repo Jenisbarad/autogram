@@ -1,14 +1,23 @@
-[build]
-builder = "NIXPACKS"
+# Railway Configuration for Insta-Autogram
 
-# System packages needed for FFmpeg and sharp
-[build.env]
-NIXPACKS_PKGS = "ffmpeg ffmpeg-dev postgresql-client python3 make g++"
+[build]
+# Use Nixpacks builder (best for Node.js apps with native dependencies)
+builder = "NIXPACKS"
+# Build from backend directory
+buildCommand = "cd backend && npm ci"
+watchPaths = ["backend/src/**"]
 
 [deploy]
-startCommand = "npm start"
+# Health check configuration
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-# Disable serverless to keep the app running
 restartPolicyMaxRetries = 10
+
+# Disable serverless to keep app running 24/7
+# This is important for Telegram webhooks and queue workers
+disableServerless = true
+
+[deploy.env]
+PORT = "4000"
+NODE_ENV = "production"

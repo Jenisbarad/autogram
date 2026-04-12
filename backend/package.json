@@ -7,8 +7,7 @@
         "predev": "npx kill-port 4000",
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
-        "migrate": "node src/db/migrate.js",
-        "postinstall": "npm run migrate || true"
+        "migrate": "node src/db/migrate.js"
     },
     "dependencies": {
         "@bull-board/api": "^5.5.0",
