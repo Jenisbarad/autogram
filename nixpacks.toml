@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["ffmpeg", "postgresql-client"]
+
+[phases.build]
+cmds = ["cd backend && npm ci"]
+
+[start]
+cmd = "cd backend && npm start"
