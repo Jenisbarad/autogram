@@ -1,8 +1,11 @@
 [phases.setup]
-nixPkgs = ["ffmpeg", "python3", "yt-dlp"]
+nixPkgs = ["ffmpeg", "python3"]
 
 [phases.build]
-cmds = []
+cmds = ["pip3 install yt-dlp --break-system-packages || pip3 install yt-dlp"]
 
 [start]
 cmd = "cd backend && npm start"
+
+[env]
+PATH = "/root/.local/bin:$PATH"
