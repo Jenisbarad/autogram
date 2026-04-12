@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["ffmpeg", "python3", "pip"]
+nixPkgs = ["ffmpeg", "python3"]
 
 [env]
 PATH = "/root/.local/bin:$PATH"
