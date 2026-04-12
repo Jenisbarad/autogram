@@ -42,12 +42,14 @@ function getFontPath() {
  */
 function generateRandomTransforms() {
     return {
-        shouldMirror: Math.random() > 0.6,            // 40% chance (less aggressive)
-        speedFactor: 1.01 + (Math.random() * 0.03),   // 1.01 - 1.04x (subtle, less artifacting)
-        contrast: 1.0 + (Math.random() * 0.06 - 0.03), // 0.97 - 1.03
-        brightness: Math.random() * 0.04 - 0.02,      // -0.02 - 0.02 (FFmpeg eq brightness is offset)
-        saturation: 1.0 + (Math.random() * 0.08 - 0.04), // 0.96 - 1.04
-        zoomIntensity: Math.random() * 0.015,         // 0 - 1.5% zoom
+        shouldMirror: Math.random() > 0.9,             // 10% chance only
+        speedFactor: Math.random() > 0.8               // mostly keep original speed
+            ? (1.005 + Math.random() * 0.015)          // 1.005 - 1.02x
+            : 1.0,
+        contrast: 1.0 + (Math.random() * 0.03 - 0.015), // 0.985 - 1.015
+        brightness: Math.random() * 0.016 - 0.008,      // -0.008 - 0.008
+        saturation: 1.0 + (Math.random() * 0.04 - 0.02), // 0.98 - 1.02
+        zoomIntensity: 0,                                // disabled by default (keeps frame natural)
     };
 }
 
@@ -85,23 +87,25 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
         filters.push('hflip');
     }
 
-    // Filter 2: Scale preserving aspect ratio to cover 1080x1920
-    // Escape parentheses for Windows FFmpeg compatibility
-    filters.push('scale=if(gt(iw/ih\\,9/16)\\,1080\\,trunc(oh*9/16/2)*2):if(gt(iw/ih\\,9/16)\\,trunc(ow*16/9/2)*2\\,1920):flags=lanczos');
+    // Filter 2: Scale + center crop to stable vertical framing.
+    // This avoids tiny-strip/black-frame artifacts from dynamic expressions.
+    filters.push('scale=1080:1920:force_original_aspect_ratio=increase:flags=lanczos');
 
-    // Filter 3: Crop to exact 9:16 (escape parentheses for Windows)
-    filters.push('crop=1080:1920:(iw-1080)/2:(ih-1920)/2');
+    // Filter 3: Crop to exact 9:16
+    filters.push('crop=1080:1920');
 
     // Filter 4: Subtle zoom animation (pan effect)
     if (transforms.zoomIntensity > 0 && !options.disableZoom) {
         // Create a subtle zoom-in effect over the video duration (escape colons for Windows)
         const zValue = transforms.zoomIntensity.toFixed(4);
-        filters.push(`zoompan=z=min(zoom+${zValue}\\,1.5):d=1:x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2)`);
+        filters.push(`zoompan=z=min(zoom+${zValue}\\,1.08):d=1:x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):s=1080x1920:fps=30`);
     }
 
     // Filter 5: Color adjustments
     if (!options.disableColorAdjust) {
         filters.push(`eq=contrast=${transforms.contrast.toFixed(3)}:brightness=${transforms.brightness.toFixed(3)}:saturation=${transforms.saturation.toFixed(3)}`);
+        // Light sharpening keeps details crisp after scaling/compression.
+        filters.push('unsharp=5:5:0.35:3:3:0.0');
     }
 
     // Filter 6: Watermark overlay (bottom-right with shadow)
@@ -121,14 +125,15 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
             .audioCodec('aac')
             .videoCodec('libx264')
             .outputOptions([
-                '-preset', 'slow',
-                '-crf', '18',
+                '-preset', 'medium',
+                '-crf', '17',
                 '-movflags', '+faststart',
                 '-pix_fmt', 'yuv420p',
                 '-profile:v', 'high',
                 '-level', '4.1',
                 '-maxrate', '12M',
                 '-bufsize', '24M',
+                '-r', '30',
                 '-c:a', 'aac',
                 '-b:a', '192k',
                 '-map_metadata', '-1',
