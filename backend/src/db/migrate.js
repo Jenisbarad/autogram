@@ -1,7 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
-const { pool } = require('./index');
+const { Pool } = require('pg');
+
+// Create pool directly to avoid circular dependency
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
 
 async function migrate() {
     console.log('🔄 Running database migrations...');
@@ -17,13 +21,18 @@ async function migrate() {
             await pool.query(sql);
             console.log(`  ✅ Done: ${file}`);
         } catch (err) {
-            console.error(`  ❌ Failed: ${file}`, err.message);
-            process.exit(1);
+            // Ignore "already exists" errors
+            if (err.message.includes('already exists')) {
+                console.log(`  ⚠️ Skipped: ${file} (already exists)`);
+            } else {
+                console.error(`  ❌ Failed: ${file}`, err.message);
+                throw err;
+            }
         }
     }
 
     console.log('✅ All migrations completed!');
-    process.exit(0);
+    await pool.end();
 }
 
 module.exports = { migrate };
