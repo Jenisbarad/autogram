@@ -16,6 +16,11 @@ const path = require('path');
 const fs = require('fs');
 const { PROC_DIR, THUMB_DIR } = require('../downloader/mediaDownloader');
 
+function isResourceKillError(err) {
+    const msg = `${err?.message || ''} ${err?.signal || ''}`.toLowerCase();
+    return msg.includes('sigkill') || msg.includes('killed');
+}
+
 /**
  * Get font path for watermark (cross-platform)
  */
@@ -77,6 +82,9 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     // Generate or use provided transforms
     const transforms = options.transforms || generateRandomTransforms();
+    const isLowMemoryMode = !!options.lowMemoryMode;
+    const targetW = isLowMemoryMode ? 720 : 1080;
+    const targetH = isLowMemoryMode ? 1280 : 1920;
 
     console.log(`🎬 [VideoProcessor] Applying transformations:`);
     console.log(`   Mirror: ${transforms.shouldMirror ? 'Yes' : 'No'}`);
@@ -84,6 +92,9 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     console.log(`   Crop: ${(transforms.cropPercent * 100).toFixed(2)}%`);
     console.log(`   Speed: ${transforms.speedFactor.toFixed(3)}x`);
     console.log(`   Zoom: ${(transforms.zoomIntensity * 100).toFixed(1)}%`);
+    if (isLowMemoryMode) {
+        console.log('   Encode profile: low-memory fallback');
+    }
 
     // Build filter complex
     const filters = [];
@@ -95,10 +106,10 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     // Filter 2: Scale + center crop to stable vertical framing.
     // This avoids tiny-strip/black-frame artifacts from dynamic expressions.
-    filters.push('scale=1080:1920:force_original_aspect_ratio=increase:flags=lanczos');
+    filters.push(`scale=${targetW}:${targetH}:force_original_aspect_ratio=increase:flags=lanczos`);
 
     // Filter 3: Crop to exact 9:16
-    filters.push('crop=1080:1920');
+    filters.push(`crop=${targetW}:${targetH}`);
 
     // Filter 4: Slight random rotation (kept subtle to preserve viewing quality)
     if (!options.disableRotate) {
@@ -109,10 +120,10 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     // Filter 5: Crop 5-8% around center, then scale back to target output size.
     if (!options.disablePercentCrop) {
         const cropFactor = 1 - transforms.cropPercent;
-        const cropW = Math.max(2, Math.floor((1080 * cropFactor) / 2) * 2);
-        const cropH = Math.max(2, Math.floor((1920 * cropFactor) / 2) * 2);
+        const cropW = Math.max(2, Math.floor((targetW * cropFactor) / 2) * 2);
+        const cropH = Math.max(2, Math.floor((targetH * cropFactor) / 2) * 2);
         filters.push(`crop=${cropW}:${cropH}`);
-        filters.push('scale=1080:1920:flags=lanczos');
+        filters.push(`scale=${targetW}:${targetH}:flags=lanczos`);
     }
 
     // Filter 6: Subtle zoom animation (pan effect)
@@ -126,14 +137,16 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     if (!options.disableColorAdjust) {
         filters.push(`eq=contrast=${transforms.contrast.toFixed(3)}:brightness=${transforms.brightness.toFixed(3)}:saturation=${transforms.saturation.toFixed(3)}`);
         // Light sharpening keeps details crisp after scaling/compression.
-        filters.push('unsharp=5:5:0.35:3:3:0.0');
+        if (!isLowMemoryMode) {
+            filters.push('unsharp=5:5:0.35:3:3:0.0');
+        }
     }
 
     // Filter 8: Watermark overlay (bottom-right with shadow)
     // Note: fontfile parameter causes issues on Windows FFmpeg, using default font
     const escapedText = watermarkText.replace(/'/g, "\\'").replace(/:/g, '\\:').replace(/\\/g, '\\\\');
 
-    filters.push(`drawtext=text='${escapedText}':fontsize=42:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2`);
+    filters.push(`drawtext=text='${escapedText}':fontsize=${isLowMemoryMode ? 32 : 42}:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2`);
 
     // Keep all transforms in a single video filter graph.
     if (Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
@@ -146,17 +159,17 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
             .audioCodec('aac')
             .videoCodec('libx264')
             .outputOptions([
-                '-preset', 'medium',
-                '-crf', '17',
+                '-preset', isLowMemoryMode ? 'veryfast' : 'medium',
+                '-crf', isLowMemoryMode ? '22' : '17',
                 '-movflags', '+faststart',
                 '-pix_fmt', 'yuv420p',
                 '-profile:v', 'high',
                 '-level', '4.1',
-                '-maxrate', '12M',
-                '-bufsize', '24M',
-                '-r', '30',
+                '-maxrate', isLowMemoryMode ? '4M' : '12M',
+                '-bufsize', isLowMemoryMode ? '8M' : '24M',
+                '-r', isLowMemoryMode ? '24' : '30',
                 '-c:a', 'aac',
-                '-b:a', '192k',
+                '-b:a', isLowMemoryMode ? '128k' : '192k',
                 '-map_metadata', '-1',
             ]);
 
@@ -197,6 +210,19 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
                         console.warn('Failed to cleanup partial file:', e.message);
                     }
                 }
+
+                // Railway containers may kill heavy ffmpeg jobs due to memory limits.
+                // Retry once with a lighter profile before failing the submission.
+                if (!isLowMemoryMode && isResourceKillError(err)) {
+                    console.warn('⚠️ FFmpeg killed by resource limit, retrying in low-memory mode...');
+                    processVideo(inputPath, outputId, watermarkText, {
+                        ...options,
+                        lowMemoryMode: true,
+                        transforms,
+                    }).then(resolve).catch(reject);
+                    return;
+                }
+
                 reject(new Error(`Video processing failed: ${err.message}`));
             });
 
