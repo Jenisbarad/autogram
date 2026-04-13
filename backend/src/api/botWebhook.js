@@ -25,8 +25,14 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-// Quick Submit API URL (can be external or localhost)
-const QUICK_SUBMIT_URL = process.env.PUBLIC_QUICK_SUBMIT_URL || `http://localhost:${process.env.PORT || 4000}/api/quick-submit`;
+const RAILWAY_DOMAIN = process.env.RAILWAY_PUBLIC_DOMAIN;
+const PUBLIC_BASE_URL = process.env.PUBLIC_BACKEND_URL
+    || (RAILWAY_DOMAIN ? `https://${RAILWAY_DOMAIN}` : null);
+const INTERNAL_BASE_URL = `http://127.0.0.1:${process.env.PORT || process.env.BACKEND_PORT || 4000}`;
+
+// Quick Submit API URL (prefer explicit/public URL; fallback to internal localhost)
+const QUICK_SUBMIT_URL = process.env.PUBLIC_QUICK_SUBMIT_URL
+    || (PUBLIC_BASE_URL ? `${PUBLIC_BASE_URL}/api/quick-submit` : `${INTERNAL_BASE_URL}/api/quick-submit`);
 
 // ─────────────────────────────────────────────────────────────
 // TELEGRAM BOT WEBHOOK
@@ -342,14 +348,16 @@ async function processBotMessage(text, username, chatId, platform) {
  * Get bot status and configuration
  */
 router.get('/status', (req, res) => {
+    const dynamicBaseUrl = PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+
     res.json({
         telegram: {
             configured: !!TELEGRAM_BOT_TOKEN,
-            webhook_url: `${req.protocol}://${req.get('host')}/api/bot/webhook/telegram`
+            webhook_url: `${dynamicBaseUrl}/api/bot/webhook/telegram`
         },
         whatsapp: {
             configured: !!(WHATSAPP_VERIFY_TOKEN && process.env.WHATSAPP_ACCESS_TOKEN),
-            webhook_url: `${req.protocol}://${req.get('host')}/api/bot/webhook/whatsapp`
+            webhook_url: `${dynamicBaseUrl}/api/bot/webhook/whatsapp`
         },
         quick_submit_url: QUICK_SUBMIT_URL
     });

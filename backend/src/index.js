@@ -24,6 +24,9 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = Number(process.env.PORT || process.env.BACKEND_PORT || 4000);
 
+// Respect forwarded protocol/host headers behind Railway proxy.
+app.set('trust proxy', true);
+
 // ─── Middleware ───────────────────────────────────────────
 app.use(cors({
   origin: function (origin, callback) {
