@@ -21,6 +21,14 @@ function isResourceKillError(err) {
     return msg.includes('sigkill') || msg.includes('killed');
 }
 
+function isConversionFailure(err) {
+    const msg = `${err?.message || ''}`.toLowerCase();
+    return msg.includes('conversion failed')
+        || msg.includes('error initializing')
+        || msg.includes('invalid argument')
+        || msg.includes('code 234');
+}
+
 function probeHasAudio(inputPath) {
     return new Promise((resolve) => {
         ffmpeg.ffprobe(inputPath, (err, metadata) => {
@@ -100,6 +108,8 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     const transforms = options.transforms || generateRandomTransforms();
     const hasAudio = await probeHasAudio(inputPath);
     const isLowMemoryMode = !!options.lowMemoryMode;
+    const isSafeMode = !!options.safeMode;
+    const isMinimalMode = !!options.minimalMode;
     const targetW = isLowMemoryMode ? 720 : 1080;
     const targetH = isLowMemoryMode ? 1280 : 1920;
 
@@ -110,7 +120,11 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     console.log(`   Speed: ${transforms.speedFactor.toFixed(3)}x`);
     console.log(`   Zoom: ${(transforms.zoomIntensity * 100).toFixed(1)}%`);
     console.log(`   Audio stream: ${hasAudio ? 'Yes' : 'No'}`);
-    if (isLowMemoryMode) {
+    if (isMinimalMode) {
+        console.log('   Encode profile: minimal compatibility mode');
+    } else if (isSafeMode) {
+        console.log('   Encode profile: safe fallback mode');
+    } else if (isLowMemoryMode) {
         console.log('   Encode profile: low-memory fallback');
     }
 
@@ -155,7 +169,7 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     if (!options.disableColorAdjust) {
         filters.push(`eq=contrast=${transforms.contrast.toFixed(3)}:brightness=${transforms.brightness.toFixed(3)}:saturation=${transforms.saturation.toFixed(3)}`);
         // Light sharpening keeps details crisp after scaling/compression.
-        if (!isLowMemoryMode) {
+        if (!isLowMemoryMode && !isSafeMode && !isMinimalMode) {
             filters.push('unsharp=5:5:0.35:3:3:0.0');
         }
     }
@@ -164,7 +178,9 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     // Note: fontfile parameter causes issues on Windows FFmpeg, using default font
     const escapedText = watermarkText.replace(/'/g, "\\'").replace(/:/g, '\\:').replace(/\\/g, '\\\\');
 
-    filters.push(`drawtext=text='${escapedText}':fontsize=${isLowMemoryMode ? 32 : 42}:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2`);
+    if (!options.disableWatermark) {
+        filters.push(`drawtext=text='${escapedText}':fontsize=${isLowMemoryMode ? 32 : 42}:fontcolor=white@0.85:x=w-tw-40:y=h-th-60:shadowcolor=black@0.7:shadowx=2:shadowy=2`);
+    }
 
     // Keep all transforms in a single video filter graph.
     if (Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
@@ -243,6 +259,42 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
                     processVideo(inputPath, outputId, watermarkText, {
                         ...options,
                         lowMemoryMode: true,
+                        transforms,
+                    }).then(resolve).catch(reject);
+                    return;
+                }
+
+                // Some source reels fail with complex filter combinations on certain builds.
+                // Retry with a safer filter set before giving up.
+                if (!isSafeMode && isConversionFailure(err)) {
+                    console.warn('⚠️ FFmpeg conversion failed, retrying in safe mode...');
+                    processVideo(inputPath, outputId, watermarkText, {
+                        ...options,
+                        lowMemoryMode: true,
+                        safeMode: true,
+                        disableRotate: true,
+                        disablePercentCrop: true,
+                        disableColorAdjust: true,
+                        disableSpeed: true,
+                        transforms,
+                    }).then(resolve).catch(reject);
+                    return;
+                }
+
+                // Last-resort compatibility profile for tricky inputs.
+                if (isSafeMode && !isMinimalMode && isConversionFailure(err)) {
+                    console.warn('⚠️ Safe mode failed, retrying in minimal compatibility mode...');
+                    processVideo(inputPath, outputId, watermarkText, {
+                        ...options,
+                        lowMemoryMode: true,
+                        safeMode: true,
+                        minimalMode: true,
+                        disableMirror: true,
+                        disableRotate: true,
+                        disablePercentCrop: true,
+                        disableColorAdjust: true,
+                        disableSpeed: true,
+                        disableWatermark: true,
                         transforms,
                     }).then(resolve).catch(reject);
                     return;
