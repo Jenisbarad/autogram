@@ -272,7 +272,7 @@ async function processBotMessage(text, username, chatId, platform) {
     // /post @page_slug url
     // post @page_slug url
     // @page_slug url
-    const postRegex = /^(?:\/post\s+|post\s+)?@(\w+)\s+(https?:\/\/(?:www\.)?instagram\.com\/(?:reel|p)\/[\w-]+\/?)/i;
+    const postRegex = /^(?:\/post\s+|post\s+)?@([\w.]+)\s+(https?:\/\/(?:www\.)?instagram\.com\/(?:reel|reels|p)\/[A-Za-z0-9_-]+(?:\/?(?:\?[^\s]+)?)?)/i;
     const match = cleanText.match(postRegex);
 
     if (!match) {
