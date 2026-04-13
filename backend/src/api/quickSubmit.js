@@ -50,15 +50,19 @@ router.post('/', async (req, res) => {
     }
 
     // Find account by slug
+    const normalizedPageSlug = (page_slug || '').trim().replace(/^@/, '').toLowerCase();
     const accountResult = await query(
-        `SELECT * FROM instagram_accounts WHERE slug = $1 AND is_active = TRUE`,
-        [page_slug]
+        `SELECT * FROM instagram_accounts
+         WHERE is_active = TRUE
+           AND (LOWER(slug) = $1 OR LOWER(username) = $1 OR LOWER(page_name) = $1)
+         LIMIT 1`,
+        [normalizedPageSlug]
     );
 
     if (!accountResult.rows.length) {
         return res.status(404).json({
             error: 'Account not found',
-            message: `No active account found with slug: @${page_slug}`
+            message: `No active account found for: @${page_slug}`
         });
     }
 

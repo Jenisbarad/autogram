@@ -109,9 +109,18 @@ async function start() {
       //   console.error('❌ Failed to start tunnel:', err.message);
       // }
 
-      // Set ngrok URL manually
-      process.env.PUBLIC_BACKEND_URL = 'https://tripodic-loni-trimodal.ngrok-free.dev';
-      console.log(`🌍 Public URL (ngrok): ${process.env.PUBLIC_BACKEND_URL}`);
+      // Prefer an explicit public URL from the environment.
+      // Railway should set PUBLIC_BACKEND_URL to the live service URL.
+      if (!process.env.PUBLIC_BACKEND_URL) {
+        if (process.env.NODE_ENV !== 'production') {
+          process.env.PUBLIC_BACKEND_URL = `http://localhost:${PORT}`;
+        } else {
+          console.warn('⚠️ PUBLIC_BACKEND_URL is not set; public media/webhook links may fail');
+        }
+      }
+      if (process.env.PUBLIC_BACKEND_URL) {
+        console.log(`🌍 Public URL: ${process.env.PUBLIC_BACKEND_URL}`);
+      }
 
       // ─── Instagram DM Submission Worker ──────────────────
       // Run immediately on start, then every 5 minutes

@@ -33,7 +33,7 @@ router.post('/add', async (req, res) => {
       (page_name, username, slug, category, instagram_user_id, access_token, app_id, app_secret, posting_mode, auto_viral_threshold, watermark_text, allowed_submitters)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
      RETURNING *`,
-        [page_name, username, slugStr, category, instagram_user_id, access_token, app_id, app_secret, posting_mode, auto_viral_threshold, watermark_text || `@${username}`, JSON.stringify(submitters)]
+        [page_name, username, slug, category, instagram_user_id, access_token, app_id, app_secret, posting_mode, auto_viral_threshold, watermark_text || `@${username}`, JSON.stringify(submitters)]
     );
 
     res.status(201).json({ success: true, account: result.rows[0] });
