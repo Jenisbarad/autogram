@@ -21,6 +21,22 @@ function isResourceKillError(err) {
     return msg.includes('sigkill') || msg.includes('killed');
 }
 
+function probeHasAudio(inputPath) {
+    return new Promise((resolve) => {
+        ffmpeg.ffprobe(inputPath, (err, metadata) => {
+            if (err) {
+                console.warn(`⚠️ ffprobe failed, assuming audio exists: ${err.message}`);
+                resolve(true);
+                return;
+            }
+
+            const hasAudio = Array.isArray(metadata?.streams)
+                && metadata.streams.some(s => s.codec_type === 'audio');
+            resolve(hasAudio);
+        });
+    });
+}
+
 /**
  * Get font path for watermark (cross-platform)
  */
@@ -82,6 +98,7 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     // Generate or use provided transforms
     const transforms = options.transforms || generateRandomTransforms();
+    const hasAudio = await probeHasAudio(inputPath);
     const isLowMemoryMode = !!options.lowMemoryMode;
     const targetW = isLowMemoryMode ? 720 : 1080;
     const targetH = isLowMemoryMode ? 1280 : 1920;
@@ -92,6 +109,7 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     console.log(`   Crop: ${(transforms.cropPercent * 100).toFixed(2)}%`);
     console.log(`   Speed: ${transforms.speedFactor.toFixed(3)}x`);
     console.log(`   Zoom: ${(transforms.zoomIntensity * 100).toFixed(1)}%`);
+    console.log(`   Audio stream: ${hasAudio ? 'Yes' : 'No'}`);
     if (isLowMemoryMode) {
         console.log('   Encode profile: low-memory fallback');
     }
@@ -156,7 +174,6 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     return new Promise((resolve, reject) => {
         const command = ffmpeg(inputPath)
             .videoFilters(filters.join(','))
-            .audioCodec('aac')
             .videoCodec('libx264')
             .outputOptions([
                 '-preset', isLowMemoryMode ? 'veryfast' : 'medium',
@@ -168,13 +185,21 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
                 '-maxrate', isLowMemoryMode ? '4M' : '12M',
                 '-bufsize', isLowMemoryMode ? '8M' : '24M',
                 '-r', isLowMemoryMode ? '24' : '30',
-                '-c:a', 'aac',
-                '-b:a', isLowMemoryMode ? '128k' : '192k',
                 '-map_metadata', '-1',
             ]);
 
+        if (hasAudio) {
+            command.audioCodec('aac');
+            command.outputOptions([
+                '-c:a', 'aac',
+                '-b:a', isLowMemoryMode ? '128k' : '192k',
+            ]);
+        } else {
+            command.noAudio();
+        }
+
         // Apply speed change
-        if (Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
+        if (hasAudio && Math.abs(transforms.speedFactor - 1.0) > 0.01 && !options.disableSpeed) {
             // For audio, use atempo (can only do 0.5x to 2x, so chain multiple if needed)
             if (transforms.speedFactor >= 0.5 && transforms.speedFactor <= 2.0) {
                 command.audioFilters(`atempo=${transforms.speedFactor.toFixed(3)}`);
