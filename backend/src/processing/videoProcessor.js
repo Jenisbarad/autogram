@@ -2,11 +2,12 @@
  * Advanced Video Processor with Copyright Avoidance
  *
  * Transformations applied to make content unique:
- * 1. Smart 9:16 crop with subtle zoom animation
- * 2. Watermark overlay (page branding)
- * 3. Mirror flip (50% chance)
- * 4. Speed change (1.05x - 1.15x)
- * 5. Color adjustment
+ * 1. Mirror flip on every reel
+ * 2. Slight random rotation on every reel
+ * 3. Center crop 5-8% on every reel, then rescale to 9:16
+ * 4. Random speed change (+/- 2-5%)
+ * 5. Watermark overlay (page branding)
+ * 6. Color adjustment
  * 6. Optional: Clip mashup (combining multiple clips)
  */
 
@@ -41,11 +42,14 @@ function getFontPath() {
  * Generate random transformation parameters
  */
 function generateRandomTransforms() {
+    const speedDelta = 0.02 + Math.random() * 0.03; // 2% - 5%
+    const speedSign = Math.random() > 0.5 ? 1 : -1;
+
     return {
-        shouldMirror: Math.random() > 0.9,             // 10% chance only
-        speedFactor: Math.random() > 0.8               // mostly keep original speed
-            ? (1.005 + Math.random() * 0.015)          // 1.005 - 1.02x
-            : 1.0,
+        shouldMirror: true,
+        rotationDeg: (Math.random() * 2.4) - 1.2,       // -1.2deg to +1.2deg
+        cropPercent: 0.05 + Math.random() * 0.03,       // 5% - 8%
+        speedFactor: 1 + (speedSign * speedDelta),      // 0.95-0.98x or 1.02-1.05x
         contrast: 1.0 + (Math.random() * 0.03 - 0.015), // 0.985 - 1.015
         brightness: Math.random() * 0.016 - 0.008,      // -0.008 - 0.008
         saturation: 1.0 + (Math.random() * 0.04 - 0.02), // 0.98 - 1.02
@@ -76,13 +80,15 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
 
     console.log(`🎬 [VideoProcessor] Applying transformations:`);
     console.log(`   Mirror: ${transforms.shouldMirror ? 'Yes' : 'No'}`);
+    console.log(`   Rotation: ${transforms.rotationDeg.toFixed(3)}°`);
+    console.log(`   Crop: ${(transforms.cropPercent * 100).toFixed(2)}%`);
     console.log(`   Speed: ${transforms.speedFactor.toFixed(3)}x`);
     console.log(`   Zoom: ${(transforms.zoomIntensity * 100).toFixed(1)}%`);
 
     // Build filter complex
     const filters = [];
 
-    // Filter 1: Mirror flip (if enabled)
+    // Filter 1: Mirror flip (enabled by default for every reel)
     if (transforms.shouldMirror && !options.disableMirror) {
         filters.push('hflip');
     }
@@ -94,21 +100,36 @@ async function processVideo(inputPath, outputId, watermarkText = '@page', option
     // Filter 3: Crop to exact 9:16
     filters.push('crop=1080:1920');
 
-    // Filter 4: Subtle zoom animation (pan effect)
+    // Filter 4: Slight random rotation (kept subtle to preserve viewing quality)
+    if (!options.disableRotate) {
+        const rotateRad = (transforms.rotationDeg * Math.PI / 180).toFixed(6);
+        filters.push(`rotate=${rotateRad}:ow=rotw(iw):oh=roth(ih):c=black`);
+    }
+
+    // Filter 5: Crop 5-8% around center, then scale back to target output size.
+    if (!options.disablePercentCrop) {
+        const cropFactor = 1 - transforms.cropPercent;
+        const cropW = Math.max(2, Math.floor((1080 * cropFactor) / 2) * 2);
+        const cropH = Math.max(2, Math.floor((1920 * cropFactor) / 2) * 2);
+        filters.push(`crop=${cropW}:${cropH}`);
+        filters.push('scale=1080:1920:flags=lanczos');
+    }
+
+    // Filter 6: Subtle zoom animation (pan effect)
     if (transforms.zoomIntensity > 0 && !options.disableZoom) {
         // Create a subtle zoom-in effect over the video duration (escape colons for Windows)
         const zValue = transforms.zoomIntensity.toFixed(4);
         filters.push(`zoompan=z=min(zoom+${zValue}\\,1.08):d=1:x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):s=1080x1920:fps=30`);
     }
 
-    // Filter 5: Color adjustments
+    // Filter 7: Color adjustments
     if (!options.disableColorAdjust) {
         filters.push(`eq=contrast=${transforms.contrast.toFixed(3)}:brightness=${transforms.brightness.toFixed(3)}:saturation=${transforms.saturation.toFixed(3)}`);
         // Light sharpening keeps details crisp after scaling/compression.
         filters.push('unsharp=5:5:0.35:3:3:0.0');
     }
 
-    // Filter 6: Watermark overlay (bottom-right with shadow)
+    // Filter 8: Watermark overlay (bottom-right with shadow)
     // Note: fontfile parameter causes issues on Windows FFmpeg, using default font
     const escapedText = watermarkText.replace(/'/g, "\\'").replace(/:/g, '\\:').replace(/\\/g, '\\\\');
 

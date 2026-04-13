@@ -22,7 +22,7 @@ const adminAuthRouter = require('./api/adminAuth');
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 4000;
+const PORT = Number(process.env.PORT || process.env.BACKEND_PORT || 4000);
 
 // ─── Middleware ───────────────────────────────────────────
 app.use(cors({
